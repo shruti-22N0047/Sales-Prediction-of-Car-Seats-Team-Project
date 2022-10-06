@@ -1,0 +1,225 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<span style="color:Red; font-size:30px; font-family:'Times New Roman'"><b><u><center>MULTIPLE LINEAR REGRESSION ON SALES PREDICTION ON CAR SEATS</center></u></b></span>
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>Data Description</u></b></span>
+
+#### <span style="color:black">The Carseats data set tracks sales information for car seats. It has 400 observations (each at a different store) and 11 variables. the porpuse is to predict number of unit sales in each condition.</span>
+##### <span style = "color:black">**Sales:** Unit sales in thousands</span>
+
+##### <span style = "color:black">**CompPrice:** Price charged by competitor at each location</span>
+
+##### <span style = "color:black">**Income:** Community income level in 1000s of dollars</span>
+
+##### <span style = "color:black">**Advertising:** Local ad budget at each location in 1000s of dollars</span>
+
+##### <span style = "color:black">**Population:** Regional pop in thousands</span>
+
+##### <span style = "color:black">**Price:** Price for car seats at each site</span>
+
+##### <span style = "color:black">**ShelveLoc:** Bad, Good or Medium indicates quality of shelving location</span>
+
+##### <span style = "color:black">**Age:** Age level of the population</span>
+
+##### <span style = "color:black">**Education:** Education level at location</span>
+
+##### <span style = "color:black">**Urban:** Yes/No</span>
+
+##### <span style = "color:black">**US:** Yes/No</span>
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>R Packages</u></b></span>
+
+```{r}
+library(corrplot)           #visualization of correlation
+library(dplyr)              #used for data transformations
+library(moments)            #used for calculating skweness and kurtosis
+library(car)                #used for functions that perform tests,transform data etc
+```
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>Data Reading and Understanding</u></b></span>
+
+```{r}
+
+seats_sales=read.csv("C:\\Users\\Shruti Saraf\\OneDrive\\Desktop\\Project\\Sales Prediction of Carseats.csv")
+
+View(seats_sales)
+
+glimpse(seats_sales)
+
+summary(seats_sales)
+
+```
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>Data Cleaning</u></b></span>
+
+```{r}
+#Removing No column
+seats_sales = seats_sales[,-1]
+
+any(is.na(seats_sales))
+
+seats_sales[duplicated(seats_sales),]
+
+```
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>Checking and Removing Outliers</u></b></span>
+
+
+```{r}
+boxplot(seats_sales$CompPrice , col = "skyblue" , xlab = "ComPrice")
+
+CompPrice = seats_sales$CompPrice
+Qu_3rd = summary(CompPrice)['3rd Qu.']
+Qu_1st = summary(CompPrice)['1st Qu.']
+IQR = Qu_3rd-Qu_1st
+upper = Qu_3rd+1.5*IQR
+lower = Qu_1st-1.5*IQR
+index_out = which(CompPrice>=upper | CompPrice<=lower)
+seats_sales1=seats_sales[-c(index_out),]
+boxplot(seats_sales1$CompPrice , col = "green" , xlab = "Comprice")
+
+boxplot(seats_sales$Price , col = "skyblue" , xlab = "Price")
+
+Price = seats_sales$Price
+Qu_3rd = summary(Price)['3rd Qu.']
+Qu_1st = summary(Price)['1st Qu.']
+IQR = Qu_3rd-Qu_1st
+upper = Qu_3rd+1.5*IQR
+lower = Qu_1st-1.5*IQR
+index_out = which(Price>=upper | Price<=lower)
+seats_sales1=seats_sales[-c(index_out),]
+seats_sales1=seats_sales1[-166,]
+boxplot(seats_sales1$Price , col = "green" , xlab = "Price" )
+
+```
+
+
+<span style="color:blue; font-size:25px; font-family:'Times New Roman'"><b><u>Data Modelling</u></b></span>
+
+```{r}
+#MODEL 1
+
+fit1=lm(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US , data = seats_sales1)
+
+summary(fit1)
+```
+
+#### <span style = "color : Black">**Interpretation**:- According to standards, p_value is greater than 0.05, we can remove the feature because overfitting occurs. In last table, Population, Education, Urban and US have p_value greater than 0.05. Thus we must remove these features using Backward Elimination and reassign model.</span>
+
+```{r}
+#MODEL 2
+
+fit2=lm(Sales ~ CompPrice + Income + Advertising + Price + ShelveLoc + Age , data = seats_sales1)
+
+summary(fit2)
+
+```
+#### <span style = "color : Black">**Interpretation**:- In this table, NO features have p_value greater than 0.05. It means that remaining all the features are significant. In this situation we sure that overfitting not occur and model is ready.</span>
+
+<span style="color: blue; font-size:25px; font-family:'Times New Roman'"><b><u>Linear Model Assumptions</u></b></span>
+
+#### <span style = "color : Black">1) LINEARITY</span>
+
+#### <span style = "color : Black">2) NORMALITY OF ERROR COMPONENTS</span>
+
+#### <span style = "color : Black">3) HOMOSCEDASTICITY (CONSTANT STANDARD DEVIATION)</span>
+
+#### <span style = "color : Black">4) NO OR MULTICOLLINEARITY</span>
+
+#### <span style = "color : Black">5) NO AUTOCORRELATION</span>
+
+
+<span style="color:dark blue; font-size:20px; font-family:'Times New Roman'"><b><u>1) Linearity</u></b></span>
+
+#### <span style = "color : Black">The Linearity assumption can be checked using plot of FITTED VALUES Vs RESIDUAL</span>
+
+<span style="color:dark blue; font-size:20px; font-family:'Times New Roman'"><b><u>2) Normality of Error Components</u></b></span>
+
+#### <span style = "color : Black">The Normality assumption can be checked using Normal Q-Q plot</span>
+
+<span style="color:dark blue; font-size:20px; font-family:'Times New Roman'"><b><u>3) Homoscedasticity (Constant Standard Deviation)</u></b></span>
+
+#### <span style = "color : Black">The Homoscedasticity assumption can be checked using plot of FITTED VALUES Vs RESIDUAL</span>
+
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit2, col = "blue")
+```
+
+#### <span style = "color : Black">**Interpretation for Linearity**:- We have plotted graphs. The first graph shows the fitted values against the observed residuals. In this plot the dots should be randomly placed around the horizontal zero line, which is clear in this case. Hence the "LINEARITY" ASSUMPTION is Satisfied.</span>
+
+```{r}
+set.seed(23)
+hist(summary(fit2)$residuals,col = 71,probability = T ,
+     main = "Histogram of Residuals",
+     xlab = "Residuals",
+     ylab = "Probability",
+     border = "black",
+     breaks = 30) 
+x=summary(fit2)$residuals
+lines(density(x),col="red",lwd=2)
+y=rnorm(length(summary(fit2)$residuals))
+lines(density(y),col="blue",lwd=2)
+legend("topright",legend = c("N(0,1) line","Residuals line"),col = c("blue","red"),lty = 1:1)
+skewness(fit2$residuals)
+kurtosis(fit2$residuals)
+```
+
+#### <span style = "color : Black">**Interpretation for Normality**:- We have plotted graphs. The second graph shows the Normaal Q-Q plot. In this plot the dots should be placed approximately on Normal line i.e. N(0,1) line, which is clear in this case. Hence the "Normality" ASSUMPTION is Satisfied.Also the skewness and kurtosis of residuals is 0.10 and 2.92 respectively which is approximately 0 and 3 i.e. skewness of N(0,1) and kurtosis of N(0,1).</span>
+
+#### <span style = "color : Black">**Interpretation for Homoscedasticity**:- We have plotted graphs. The first graph shows the fitted values against the observed residuals. In this plot the dots should be randomly placed in the plot i.e. the points should not follow any particular pattern, which is clear in this case. Hence the "HOMOSCEDASTICITY" ASSUMPTION is Satisfied.</span>
+
+<span style="color:dark blue; font-size:20px; font-family:'Times New Roman'"><b><u>4) No Multicollinearity</u></b></span>
+
+#### <span style = "color : Black">When checking the assumption of multicollinearity you check if one or more variables used in the model are not to strongly correlated amongst each other. Atleast the correlation between the predictors should not be to high (that is higher than 0.80). One way to check is this, is to make a correlation matrix with all predictor variables. An easier way is to look at the variance inflation factor (VIF). The VIF should not be higher than 10.</span>
+
+#### <span style = "color : Black">As we removed the insignificant variables from our model using Backward Elimination Mthod which is exactly same as removing multicollinearity from the data.</span>
+#### <span style = "color : Black">Verified "NO MULTICOLLINEARITY", using CORRPLOT and VARIANCE INFLATION FACTOR (VIF).</span>
+
+```{r}
+#Correlation Matrix
+
+seats_sales2=seats_sales1
+seats_sales2$ShelveLoc=as.numeric(factor(seats_sales2$ShelveLoc))
+
+seats_sales2=seats_sales2[,-c(1,2,6,10,11,12)]
+corr_mtx=round(cor(seats_sales2),1);corr_mtx
+corrplot(corr_mtx)
+
+# Variance Inflation Factor
+vif(fit2)
+
+```
+
+#### <span style = "color : Black">**Interpretation for Multicollinearity**:-
+#### <span style = "color : Black">1] From the corrplot, the correlation between any two predictors(in fitted model) are not more then 0.5. Hence from the corrplot there is  no multicollinearity.</span>
+#### <span style = "color : Black">2] A VIF larger than 10 indicates multicolinearity. We have no VIF larger than 10, so this indicates no multicollinearity.</span>
+#### <span style = "color : Black">Hence "NO MULLTICOLLINEARITY" ASSUMPTION IS SATISFIED</span>
+
+<span style="color:red; font-size:20px; font-family:'Times New Roman'"><b><u>5)No Autocorrelation</u></b></span>
+
+#### <span style = "color : Black">The assumption of No Autocorrelation can be checked by ACF() function and Durbin-Watson test.</span>
+#### <span style = "color : Black">DURBIN-WATSON TEST TO CHECK AUTOCORRELATION</span>
+#### <span style = "color : Black">The Durbin-Watson test statistic has always a value between 0 and 4, where:[0-2): means positive autocorrelation,2: means no autocorrelation,(2-4]: mean negative autocorrelation.</span>
+#### <span style = "color : Black">As a rule of thumb, we assume that the residuals are not correlated when the Durbin-Watson test statistic has a value between 1.5 and 2.5. If the statistic is below 1 or above 3, then there is definitely autocorrelation among the residuals.</span>
+
+```{r}
+
+acf(fit2$residuals,type = "correlation")
+
+durbinWatsonTest(fit2)
+
+```
+#### <span style = "color : Black">**Interpretation for Autocorrelation**:-
+#### <span style = "color : Black">1] The plot shows the ACF plot of residuals that are not auto correlated.After the lag-0 correlation, the subsequent correlations drop quickly to zero and stay mostly between the limits of significance level(Blue Lines). Hence we conclude that there is no autocorrelation.</span>
+#### <span style = "color : Black">2] The output of the Durbin-Watson test above shows a test statistic near 2 (DW = 1.98) and a non-significant p-value (0.902). Therefore, we conclude that there is no autocorrelation among the residuals.</span>
+#### <span style = "color : Black">Hence "NO AUTOCORRELATION" ASSUMPTION IS SATISFIED</span>
+
+<span style="color:Maaron; font-size:30px; font-family:'Times New Roman'"><b><u><center>*CONCLUSION:*</center></u></b></span>
+
+#### <span style = "color : black">**1] Fitted Multiple Linear Regression model to evaluate the variable dependency on Sales using Backward Elimination Method.**</span>
+
+#### <span style = "color : black">**2] Computed Adjusted R2 of 0.8637 after removing outliers and verified the Linear Regression Assumptions.**</span>
